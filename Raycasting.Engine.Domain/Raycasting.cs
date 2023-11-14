@@ -64,8 +64,47 @@ namespace Raycasting.Domain
 
         public void Move(bool? forwards, bool? left)
         {
+            // If we're not moving, we can just return.
+            if (forwards == null && left == null)
+            {
+                return;
+            }
+
             var playerx = _player.Position.X;
             var playery = _player.Position.Y;
+
+            if (left == true)
+            {
+                var newPositionX = (_player.Position.X - _camera.Plane.X * _moveSpeed);
+                var newPositionY = (_player.Position.Y - _camera.Plane.Y * _moveSpeed);
+
+                // First we check that moving wont put us in a wall
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                {
+                    // If it doesnt put us in a wall, we can move forwards (or backwards).
+                    playerx = (float)(_player.Position.X - _camera.Plane.X * _moveSpeed);
+                }
+                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                {
+                    playery = (float)(_player.Position.Y - _camera.Plane.Y * _moveSpeed);
+                }
+            }
+            else if (left == false)
+            {
+                var newPositionX = (_player.Position.X + _camera.Plane.X * _moveSpeed);
+                var newPositionY = (_player.Position.Y + _camera.Plane.Y * _moveSpeed);
+
+                // First we check that moving wont put us in a wall
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                {
+                    // If it doesnt put us in a wall, we can move forwards (or backwards).
+                    playerx = (float)(_player.Position.X + _camera.Plane.X * _moveSpeed);
+                }
+                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                {
+                    playery = (float)(_player.Position.Y + _camera.Plane.Y * _moveSpeed);
+                }
+            }
 
             if (forwards == true)
             {

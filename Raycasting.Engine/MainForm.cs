@@ -37,38 +37,37 @@ namespace Raycasting.Engine
             ClientSize = new Size(W_WIDTH, W_HEIGHT);
 
             // The logic thread will handle raycasting and movement.
-            logicThread = new Thread(() => RunLoop(token));
+            logicThread = new Thread(() => DrawMainScreen(token));
             logicThread.Start();
         }
 
-        public void RunLoop(CancellationToken token)
+        public void DrawMainScreen(CancellationToken token)
         {
             // FrameTimeDouble is the length of time between frames.
             double frameTimeDouble = 0;
-            while (true)
+            try
             {
-                // Check if the cancellation has been requested
-                if (token.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
-                    // Perform any necessary cleanup here...
+                    // Start the stopwatch so we can time this frame.
+                    frameTime.Restart();
+                    // Move the player if a movement key is being pressed.
+                    MovePlayer();
+                    // Update the player move speeds based on the last frame length.
+                    RC.UpdateFramerate(frameTimeDouble);
 
-                    // Break out of the loop
-                    break;
+                    var img = RC.NewFrame(W_WIDTH, W_HEIGHT);
+
+                    UpdatePictureBoxMainImage((Image)img.Clone());
+                    img.Dispose();
+                    // Stop the stopwatch so we can get the time the frame took.
+                    frameTime.Stop();
+                    frameTimeDouble = frameTime.ElapsedMilliseconds;
                 }
-                // Start the stopwatch so we can time this frame.
-                frameTime.Restart();
-                // Move the player if a movement key is being pressed.
-                MovePlayer();
-                // Update the player move speeds based on the last frame length.
-                RC.UpdateFramerate(frameTimeDouble);
-
-                var img = RC.NewFrame(W_WIDTH, W_HEIGHT);
-
-                UpdatePictureBoxMainImage((Image)img.Clone());
-                img.Dispose();
-                // Stop the stopwatch so we can get the time the frame took.
-                frameTime.Stop();
-                frameTimeDouble = frameTime.ElapsedMilliseconds;
+            }
+            catch (Exception)
+            {
+                return;
             }
         }
 
@@ -87,9 +86,8 @@ namespace Raycasting.Engine
 
         private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
         {
-            // Close the logic thread when the form thread is closing.
-            logicThread.Interrupt();
             tokenSource.Cancel();
+            logicThread.Interrupt();
         }
 
         private void MainWindow_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
