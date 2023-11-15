@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Numerics;
 
@@ -194,7 +194,7 @@ namespace Raycasting.Domain
             var stride = data.Stride;
             var scan0 = data.Scan0;
 
-            Parallel.For(0, width, x =>
+            for(int x = 0; x < width; x++)
             {
                 // This var tracks the relative position of the ray on the camera plane, from -1 to 1, with 0 being screen centre
                 // so that we can use it to muliply the half-length of the camera plane to get the right direction of the ray.
@@ -215,8 +215,6 @@ namespace Raycasting.Domain
                 // These two variables are the distance between map square side intersections
                 double deltaDistX = Math.Abs(1 / rayDir.X);
                 double deltaDistY = Math.Abs(1 / rayDir.Y);
-                // This var is for the overall length of the ray calculations
-                double perpWallDist;
 
                 // Each time we check the next square we step either 1 in the x or 1 in the y, they will be 1 or -1 depending on whether 
                 // the character is facing towards the origin or away.
@@ -225,7 +223,11 @@ namespace Raycasting.Domain
 
                 // Finally, these two track whether a wall was hit, and the side tracks which side, horizontal or vertical was hit.
                 // A horizontal side givess 0 and a vertical side is 1.
-                bool hit = false;
+                bool wallHit = false;
+                bool objectHit = false;
+                // This list holds the objects that have been hit by the ray, so that we can draw them after the walls.
+                var objects = new List<(int, int, int, int, int, int, nint)>();
+
                 int side = 0;
 
                 // Now we calculate the way we will step based upon the direction the character is facing
@@ -252,7 +254,7 @@ namespace Raycasting.Domain
                 }
 
                 // Now we loop steping until we hit a wall
-                while (!hit)
+                while (!wallHit)
                 {
                     // Here we check which distance is closer to us, x or y, and increment the lesser
                     if (sideDistX < sideDistY)
@@ -270,84 +272,36 @@ namespace Raycasting.Domain
                         mapY += stepY;
                         side = 1;
                     }
+
+                    // Here we check if the ray is hitting an object, if it is, we set the objectHit to true
+                    if (_map.objectMap[mapX, mapY] > 0)
+                    {
+                        objectHit = true;
+                    }
+
+                    if (objectHit)
+                    {
+                        objects.Add((mapX, mapY, x, width, height, stride, scan0));
+                        objectHit = false;
+                    }
+
                     // Check if the ray is not on the side of a square that is a wall.
                     if (_map.currentMap[mapX, mapY] > 0)
                     {
-                        hit = true;
+                        wallHit = true;
                     }
                 }
 
-                // Now we've found where the next wall is, we have to find the actual distance.
-                if (side == 0)
+                drawWall(mapX, mapY, side, x, rayDir, stride, scan0, height, stepX, stepY);
+
+                //reverse this for loop to draw objects in the correct order
+                for(int i = objects.Count - 1; i >= 0; i--)
                 {
-                    perpWallDist = ((mapX - _player.Position.X + ((1 - stepX) / 2)) / rayDir.X);
-                }
-                else
-                {
-                    perpWallDist = ((mapY - _player.Position.Y + ((1 - stepY)) / 2)) / rayDir.Y;
+                    drawObject(objects[i].Item1, objects[i].Item2, objects[i].Item3, objects[i].Item4, objects[i].Item5, objects[i].Item6, objects[i].Item7);
                 }
 
-                // Here we'll start drawing the column of pixels, now we know what, and how far away.
-                // First we find the height of the wall, e.g how much of the screen it should take up
-                int columnHeight = (int)(height / perpWallDist);
-                // Next we need to find where to start drawing the column and where to stop, since the walls
-                // will be in the centre of the screen, finding the start and end is quite simple.
-                int drawStart = ((height / 2) + (columnHeight / 2));
-                // If we are going to be drawing off-screen, then draw just on screen.
-                if (drawStart >= height)
-                {
-                    drawStart = height - 1;
-                }
-                int drawEnd = ((height / 2) - (columnHeight / 2));
-                if (drawEnd < 0)
-                {
-                    drawEnd = 0;
-                }
-
-                // Now we pick the colour to draw the line in, this is based upon the colour of the wall
-                // and is then made darker if the wall is x aligned or y aligned.
-                int texNum = _map.currentMap[mapX, mapY] - 1;
-
-                double wallX;
-
-                if (side == 0)
-                {
-                    wallX = _player.Position.Y + perpWallDist * rayDir.Y;
-
-                }
-                else
-                {
-                    wallX = _player.Position.X + perpWallDist * rayDir.X;
-                }
-
-                wallX -= Math.Floor(wallX);
-
-                int texX = (int)(wallX * _map.TextureWidth);
-                if (side == 0 && rayDir.X > 0)
-                {
-                    texX = _map.TextureWidth - texX - 1;
-                }
-                if (side == 1 && rayDir.Y < 0)
-                {
-                    texX = _map.TextureWidth - texX - 1;
-                }
-
-                var column = (int*)(scan0 + (x * 4));
-
-                for (int y = drawEnd; y < drawStart; y++)
-                {
-                    int d = y * 256 - height * 128 + columnHeight * 128;
-
-                    int texY = d * _map.TextureHeight / columnHeight / 256;
-
-                    if(texY < 0)
-                    {
-                        texY = 0;
-                    }
-
-                    column[y * stride / 4] = _map.GetColor(texX, texY, texNum);
-                }
-            });
+                objects.Clear();
+            };
 
             frame.UnlockBits(data);
 
@@ -356,6 +310,196 @@ namespace Raycasting.Domain
 
             return frame;
         }
+
+        // parameters
+        // mapX, mapY: the coordinates of the wall on the map
+        // side: 0 for horizontal, 1 for vertical
+        // x: the x coordinate on the screen, calculated earlier
+        // rayDir: the direction of the ray
+        // stride: the stride of the bitmap
+        // scan0: the scan0 of the bitmap
+        // height: the height of the screen
+        // stepX, stepY: the direction of the ray
+        private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY)
+        {
+            // This var is for the overall length of the ray calculations
+            double perpWallDist;
+            // Now we've found where the next wall is, we have to find the actual distance.
+            if (side == 0)
+            {
+                perpWallDist = ((mapX - _player.Position.X + ((1 - stepX) / 2)) / rayDir.X);
+            }
+            else
+            {
+                perpWallDist = ((mapY - _player.Position.Y + ((1 - stepY)) / 2)) / rayDir.Y;
+            }
+
+            // Here we'll start drawing the column of pixels, now we know what, and how far away.
+            // First we find the height of the wall, e.g how much of the screen it should take up
+            int columnHeight = (int)(height / perpWallDist);
+            // Next we need to find where to start drawing the column and where to stop, since the walls
+            // will be in the centre of the screen, finding the start and end is quite simple.
+            int drawStart = ((height / 2) + (columnHeight / 2));
+            // If we are going to be drawing off-screen, then draw just on screen.
+            if (drawStart >= height)
+            {
+                drawStart = height - 1;
+            }
+            int drawEnd = ((height / 2) - (columnHeight / 2));
+            if (drawEnd < 0)
+            {
+                drawEnd = 0;
+            }
+
+            // Now we pick the colour to draw the line in, this is based upon the colour of the wall
+            // and is then made darker if the wall is x aligned or y aligned.
+            int texNum = _map.currentMap[mapX, mapY] - 1;
+
+            double wallX;
+
+            if (side == 0)
+            {
+                wallX = _player.Position.Y + perpWallDist * rayDir.Y;
+
+            }
+            else
+            {
+                wallX = _player.Position.X + perpWallDist * rayDir.X;
+            }
+
+            wallX -= Math.Floor(wallX);
+
+            int texX = (int)(wallX * _map.TextureWidth);
+
+            var column = (int*)(scan0 + (x * 4));
+
+            for (int y = drawEnd; y < drawStart; y++)
+            {
+                int d = y * 256 - height * 128 + columnHeight * 128;
+
+                int texY = d * _map.TextureHeight / columnHeight / 256;
+
+                if(texY < 0)
+                {
+                    texY = 0;
+                }
+
+                column[y * stride / 4] = _map.GetColorForTexture(texX, texY, texNum, side);
+            }
+        }
+
+        // parameters
+        // mapX, mapY: the coordinates of the object on the map
+        // x: the x coordinate on the screen, calculated earlier
+        // width: the width of the screen
+        // height: the height of the screen
+        // stride: the stride of the bitmap
+        // scan0: the scan0 of the bitmap
+        private unsafe void drawObject(int mapX, int mapY, int x, int width, int height, int stride, nint scan0)
+        {
+            // Calculate the distance to the object
+            double objectDist = Math.Sqrt(Math.Pow(mapX - _player.Position.X, 2) + Math.Pow(mapY - _player.Position.Y, 2));
+
+            // Calculate the angle between the player's direction and the direction to the object
+            double angleToObject = Math.Atan2(mapY - _player.Position.Y, mapX - _player.Position.X);
+
+            // Calculate the angle between the player's direction and the camera plane
+            double angleToCameraPlane = Math.Atan2(_player.Direction.Y, _player.Direction.X);
+
+            // Calculate the relative angle of the object on the camera plane
+            double relativeAngle = angleToObject - angleToCameraPlane;
+
+            // Calculate the height of the object on the screen
+            int objectHeight = (int)(height / objectDist);
+
+            // Calculate the vertical drawing range
+            int drawStart = Math.Max(0, (height - objectHeight) / 2);
+            int drawEnd = Math.Min(height, (height + objectHeight) / 2);
+
+            // Calculate the x coordinate on the texture
+            int tex_x = (int)((x / (float)width) * _map.TextureWidth);
+
+            // Reserve column to draw in
+            var column = (int*)(scan0 + (x * 4));
+
+            // Look for texture in objectMap
+            int texNum = _map.objectMap[mapX, mapY] - 1;
+
+            for (int y = drawStart; y < drawEnd; y++)
+            {
+                // Calculate the y coordinate on the texture
+                int unscaled_tex_y = y - height / 2 + objectHeight / 2; // Adjusted to avoid potential overflow
+                int tex_y = (int)((unscaled_tex_y * _map.TextureHeight) / (float)objectHeight);
+
+                // Get the color from the texture
+                var pixel = _map.GetColorForObject(tex_x, tex_y, texNum);
+                if ((pixel & 0x00FFFFFF) != 0)
+                {
+                    column[y * stride / 4] = pixel;
+                }
+            }
+        }
+
+        // parameters
+        // mapX, mapY: the coordinates of the object on the map
+        // x: the x coordinate on the screen, calculated earlier
+        // width: the width of the screen
+        // height: the height of the screen
+        // stride: the stride of the bitmap
+        // scan0: the scan0 of the bitmap
+        private unsafe void drawObject2(int mapX, int mapY, int x, int width, int height, int stride, nint scan0)
+        {
+            // Calculate the distance to the object
+            double objectDist = Math.Sqrt(Math.Pow(mapX - _player.Position.X, 2) + Math.Pow(mapY - _player.Position.Y, 2));
+
+            // Calculate the angle between the player's direction and the direction to the object
+            double angleToObject = Math.Atan2(mapY - _player.Position.Y, mapX - _player.Position.X);
+
+            // Calculate the angle between the player's direction and the camera plane
+            double angleToCameraPlane = Math.Atan2(_player.Direction.Y, _player.Direction.X);
+
+            // Calculate the relative angle of the object on the camera plane
+            double relativeAngle = angleToObject - angleToCameraPlane;
+
+            // Calculate the height of the object on the screen
+            int objectHeight = (int)(height / objectDist);
+
+            // Calculate the vertical drawing range
+            int drawStart = Math.Max(0, (height - objectHeight) / 2);
+            int drawEnd = Math.Min(height, (height + objectHeight) / 2);
+
+            // Calculate the angle in radians using Atan2
+            double angleRadians = Math.Atan2(_player.Direction.Y, _player.Direction.X);
+
+            // Calculate the x-coordinate of the texture as a double
+            double xTextureDouble = (width / 2.0) + (objectDist * Math.Tan(angleRadians));
+
+            // Ensure xTexture stays within the bounds of objectWidth
+            double halfObjectWidth = _map.TextureWidth / 2.0;
+            double xTextureClamped = Math.Max(-halfObjectWidth, Math.Min(halfObjectWidth, xTextureDouble));
+
+            // Convert the double value to an int (you can use Math.Round or (int) casting)
+            int xTexture = (int)Math.Abs(xTextureClamped);
+
+            // Reserve column to draw in
+            var column = (int*)(scan0 + (x * 4));
+
+            // Look for texture in objectMap
+            int texNum = _map.objectMap[mapX, mapY] - 1;
+
+            for (int y = drawStart; y < drawEnd; y++)
+            {
+                // Calculate the y coordinate on the texture
+                int unscaled_tex_y = y - height / 2 + objectHeight / 2; // Adjusted to avoid potential overflow
+                int tex_y = (int)((unscaled_tex_y * _map.TextureHeight) / (float)objectHeight);
+
+                // Get the color from the texture
+                var pixel = _map.GetColorForObject(xTexture, tex_y, texNum);
+                if ((pixel & 0x00FFFFFF) != 0)
+                {
+                    column[y * stride / 4] = pixel;
+                }
+            }
+        }
     }
 }
-

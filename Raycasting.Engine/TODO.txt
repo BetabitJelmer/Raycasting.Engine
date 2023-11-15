@@ -1,0 +1,4 @@
+-- Glass, Rays have to travel through them until they hit an actual wall
+-- Glass is a wall, but it's transparent
+-- Doors, Rays don't travel through them but they can be opened and closed
+-- Doors are walls, but they can be opened and closed
