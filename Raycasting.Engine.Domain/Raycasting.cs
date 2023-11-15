@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.Drawing.Imaging;
 using System.Numerics;
+using System.Security.Cryptography.Xml;
 
 namespace Raycasting.Domain
 {
@@ -181,6 +183,7 @@ namespace Raycasting.Domain
 
         public unsafe Image NewFrame(int width, int height)
         {
+            double[] ZBuffer = new double[width];
             var frame = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             var data = frame.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
             var span = new Span<int>(data.Scan0.ToPointer(), width * height);
@@ -194,7 +197,7 @@ namespace Raycasting.Domain
             var stride = data.Stride;
             var scan0 = data.Scan0;
 
-            for(int x = 0; x < width; x++)
+            Parallel.For(0, width, x =>
             {
                 // This var tracks the relative position of the ray on the camera plane, from -1 to 1, with 0 being screen centre
                 // so that we can use it to muliply the half-length of the camera plane to get the right direction of the ray.
@@ -224,9 +227,6 @@ namespace Raycasting.Domain
                 // Finally, these two track whether a wall was hit, and the side tracks which side, horizontal or vertical was hit.
                 // A horizontal side givess 0 and a vertical side is 1.
                 bool wallHit = false;
-                bool objectHit = false;
-                // This list holds the objects that have been hit by the ray, so that we can draw them after the walls.
-                var objects = new List<(int, int, int, int, int, int, nint)>();
 
                 int side = 0;
 
@@ -273,18 +273,6 @@ namespace Raycasting.Domain
                         side = 1;
                     }
 
-                    // Here we check if the ray is hitting an object, if it is, we set the objectHit to true
-                    if (_map.objectMap[mapX, mapY] > 0)
-                    {
-                        objectHit = true;
-                    }
-
-                    if (objectHit)
-                    {
-                        objects.Add((mapX, mapY, x, width, height, stride, scan0));
-                        objectHit = false;
-                    }
-
                     // Check if the ray is not on the side of a square that is a wall.
                     if (_map.currentMap[mapX, mapY] > 0)
                     {
@@ -292,16 +280,9 @@ namespace Raycasting.Domain
                     }
                 }
 
-                drawWall(mapX, mapY, side, x, rayDir, stride, scan0, height, stepX, stepY);
-
-                //reverse this for loop to draw objects in the correct order
-                for(int i = objects.Count - 1; i >= 0; i--)
-                {
-                    drawObject(objects[i].Item1, objects[i].Item2, objects[i].Item3, objects[i].Item4, objects[i].Item5, objects[i].Item6, objects[i].Item7);
-                }
-
-                objects.Clear();
-            };
+                drawWall(mapX, mapY, side, x, rayDir, stride, scan0, height, stepX, stepY, ZBuffer);
+            });
+            drawEntities(width, height, stride, scan0, ZBuffer);
 
             frame.UnlockBits(data);
 
@@ -320,7 +301,7 @@ namespace Raycasting.Domain
         // scan0: the scan0 of the bitmap
         // height: the height of the screen
         // stepX, stepY: the direction of the ray
-        private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY)
+        private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY, double[] ZBuffer)
         {
             // This var is for the overall length of the ray calculations
             double perpWallDist;
@@ -379,126 +360,128 @@ namespace Raycasting.Domain
 
                 int texY = d * _map.TextureHeight / columnHeight / 256;
 
-                if(texY < 0)
+                if (texY < 0)
                 {
                     texY = 0;
                 }
 
                 column[y * stride / 4] = _map.GetColorForTexture(texX, texY, texNum, side);
             }
+
+            //SET THE ZBUFFER FOR THE SPRITE CASTING
+            ZBuffer[x] = perpWallDist; //perpendicular distance is used
         }
 
         // parameters
-        // mapX, mapY: the coordinates of the object on the map
-        // x: the x coordinate on the screen, calculated earlier
         // width: the width of the screen
         // height: the height of the screen
         // stride: the stride of the bitmap
         // scan0: the scan0 of the bitmap
-        private unsafe void drawObject(int mapX, int mapY, int x, int width, int height, int stride, nint scan0)
+        // ZBuffer: the ZBuffer of the screen
+        private unsafe void drawEntities(int width, int height, int stride, nint scan0, double[] ZBuffer)
         {
-            // Calculate the distance to the object
-            double objectDist = Math.Sqrt(Math.Pow(mapX - _player.Position.X, 2) + Math.Pow(mapY - _player.Position.Y, 2));
+            var length = _map.entities.Length;
+            var spriteOrder = new int[length];
+            var spriteDistance = new double[length];
 
-            // Calculate the angle between the player's direction and the direction to the object
-            double angleToObject = Math.Atan2(mapY - _player.Position.Y, mapX - _player.Position.X);
-
-            // Calculate the angle between the player's direction and the camera plane
-            double angleToCameraPlane = Math.Atan2(_player.Direction.Y, _player.Direction.X);
-
-            // Calculate the relative angle of the object on the camera plane
-            double relativeAngle = angleToObject - angleToCameraPlane;
-
-            // Calculate the height of the object on the screen
-            int objectHeight = (int)(height / objectDist);
-
-            // Calculate the vertical drawing range
-            int drawStart = Math.Max(0, (height - objectHeight) / 2);
-            int drawEnd = Math.Min(height, (height + objectHeight) / 2);
-
-            // Calculate the x coordinate on the texture
-            int tex_x = (int)((x / (float)width) * _map.TextureWidth);
-
-            // Reserve column to draw in
-            var column = (int*)(scan0 + (x * 4));
-
-            // Look for texture in objectMap
-            int texNum = _map.objectMap[mapX, mapY] - 1;
-
-            for (int y = drawStart; y < drawEnd; y++)
+            for (int i = 0; i < length; i++)
             {
-                // Calculate the y coordinate on the texture
-                int unscaled_tex_y = y - height / 2 + objectHeight / 2; // Adjusted to avoid potential overflow
-                int tex_y = (int)((unscaled_tex_y * _map.TextureHeight) / (float)objectHeight);
+                spriteOrder[i] = i;
+                spriteDistance[i] = ((_player.Position.X - _map.entities[i].X) * (_player.Position.X - _map.entities[i].X) + (_player.Position.Y - _map.entities[i].Y) * (_player.Position.Y - _map.entities[i].Y)); //sqrt not taken, unneeded
+            }
 
-                // Get the color from the texture
-                var pixel = _map.GetColorForObject(tex_x, tex_y, texNum);
-                if ((pixel & 0x00FFFFFF) != 0)
+            sortSprites(spriteOrder, spriteDistance, length);
+
+            //after sorting the sprites, do the projection and draw them
+            for (int i = 0; i < length; i++)
+            {
+                //translate sprite position to relative to camera
+                double spriteX = _map.entities[spriteOrder[i]].X - _player.Position.X;
+                double spriteY = _map.entities[spriteOrder[i]].Y - _player.Position.Y;
+
+                double invDet = 1.0 / (_camera.Plane.X * _player.Direction.Y - _player.Direction.X * _camera.Plane.Y);
+                double transformX = invDet * (_player.Direction.Y * spriteX - _player.Direction.X * spriteY);
+                double transformY = invDet * (-_camera.Plane.Y * spriteX + _camera.Plane.X * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
+
+                int spriteScreenX = (int)((width / 2) * (1 + transformX / transformY));
+                //calculate height of the sprite on screen
+                int spriteHeight = Math.Abs((int)(height / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
+                                                               //calculate lowest and highest pixel to fill in current stripe
+                int drawStartY = -spriteHeight / 2 + height / 2;
+                if (drawStartY < 0)
                 {
-                    column[y * stride / 4] = pixel;
+                    drawStartY = 0;
+                }
+                int drawEndY = spriteHeight / 2 + height / 2;
+                if (drawEndY >= height)
+                {
+                    drawEndY = height - 1;
+                }
+
+                //calculate width of the sprite
+                int spriteWidth = Math.Abs((int)(height / (transformY)));
+                int drawStartX = -spriteWidth / 2 + spriteScreenX;
+                if (drawStartX < 0)
+                { 
+                    drawStartX = 0; 
+                }
+                int drawEndX = spriteWidth / 2 + spriteScreenX;
+                if (drawEndX >= width)
+                {
+                    drawEndX = width - 1;
+                }
+
+                //loop through every vertical stripe of the sprite on screen
+                for (int stripe = drawStartX; stripe < drawEndX; stripe++)
+                {
+                    int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * _map.TextureWidth / spriteWidth) / 256;
+                    //the conditions in the if are:
+                    //1) it's in front of camera plane so you don't see things behind you
+                    //2) it's on the screen (left)
+                    //3) it's on the screen (right)
+                    //4) ZBuffer, with perpendicular distance
+
+                    var column = (int*)(scan0 + (stripe * 4));
+                    var floatHeight = height * 128;
+                    var floatSpriteHeight = spriteHeight * 128;
+
+                    if (transformY > 0 && stripe > 0 && stripe < width && transformY < ZBuffer[stripe])
+                    {
+                        for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
+                        {
+                            int d = (y) * 256 - floatHeight + floatSpriteHeight; //256 and 128 factors to avoid floats
+                            int texY = ((d * _map.TextureHeight) / spriteHeight) / 256;
+                            if (texY < 0)
+                            {
+                                texY = 0;
+                            }
+                            if (texX < 0)
+                            {
+                                texX = 0;
+                            }
+                            var pixel = _map.GetColorForObject(texX, texY, _map.entities[spriteOrder[i]].Texture);
+                            if ((pixel & 0x00FFFFFF) != 0)
+                            {
+                                column[y * stride / 4] = pixel;
+                            }
+                        }
+                    }
                 }
             }
         }
 
-        // parameters
-        // mapX, mapY: the coordinates of the object on the map
-        // x: the x coordinate on the screen, calculated earlier
-        // width: the width of the screen
-        // height: the height of the screen
-        // stride: the stride of the bitmap
-        // scan0: the scan0 of the bitmap
-        private unsafe void drawObject2(int mapX, int mapY, int x, int width, int height, int stride, nint scan0)
+        private void sortSprites(int[] order, double[] dist, int amount)
         {
-            // Calculate the distance to the object
-            double objectDist = Math.Sqrt(Math.Pow(mapX - _player.Position.X, 2) + Math.Pow(mapY - _player.Position.Y, 2));
-
-            // Calculate the angle between the player's direction and the direction to the object
-            double angleToObject = Math.Atan2(mapY - _player.Position.Y, mapX - _player.Position.X);
-
-            // Calculate the angle between the player's direction and the camera plane
-            double angleToCameraPlane = Math.Atan2(_player.Direction.Y, _player.Direction.X);
-
-            // Calculate the relative angle of the object on the camera plane
-            double relativeAngle = angleToObject - angleToCameraPlane;
-
-            // Calculate the height of the object on the screen
-            int objectHeight = (int)(height / objectDist);
-
-            // Calculate the vertical drawing range
-            int drawStart = Math.Max(0, (height - objectHeight) / 2);
-            int drawEnd = Math.Min(height, (height + objectHeight) / 2);
-
-            // Calculate the angle in radians using Atan2
-            double angleRadians = Math.Atan2(_player.Direction.Y, _player.Direction.X);
-
-            // Calculate the x-coordinate of the texture as a double
-            double xTextureDouble = (width / 2.0) + (objectDist * Math.Tan(angleRadians));
-
-            // Ensure xTexture stays within the bounds of objectWidth
-            double halfObjectWidth = _map.TextureWidth / 2.0;
-            double xTextureClamped = Math.Max(-halfObjectWidth, Math.Min(halfObjectWidth, xTextureDouble));
-
-            // Convert the double value to an int (you can use Math.Round or (int) casting)
-            int xTexture = (int)Math.Abs(xTextureClamped);
-
-            // Reserve column to draw in
-            var column = (int*)(scan0 + (x * 4));
-
-            // Look for texture in objectMap
-            int texNum = _map.objectMap[mapX, mapY] - 1;
-
-            for (int y = drawStart; y < drawEnd; y++)
+            var sprites = new List<(double, int)>(amount);
+            for (int i = 0; i < amount; i++)
             {
-                // Calculate the y coordinate on the texture
-                int unscaled_tex_y = y - height / 2 + objectHeight / 2; // Adjusted to avoid potential overflow
-                int tex_y = (int)((unscaled_tex_y * _map.TextureHeight) / (float)objectHeight);
-
-                // Get the color from the texture
-                var pixel = _map.GetColorForObject(xTexture, tex_y, texNum);
-                if ((pixel & 0x00FFFFFF) != 0)
-                {
-                    column[y * stride / 4] = pixel;
-                }
+                sprites.Add((dist[i], order[i]));
+            }
+            sprites.Sort();
+            for (int i = 0; i < amount; i++)
+            {
+                dist[i] = sprites[amount - i - 1].Item1;
+                order[i] = sprites[amount - i - 1].Item2;
             }
         }
     }
