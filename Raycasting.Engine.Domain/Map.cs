@@ -37,13 +37,14 @@ namespace Raycasting.Domain
             {2,2,2,2,1,2,2,2,2,2,2,1,2,2,2,5,5,5,5,5,5,5,5,5}
         };
 
-        private readonly Bitmap[] _textures = new Bitmap[8];
-        private readonly byte[][] _textureBytes = new byte[8][];
+        private readonly Bitmap[] _textures = new Bitmap[9];
+        private readonly byte[][] _textureBytes = new byte[9][];
 
         private readonly Bitmap[] _objects = new Bitmap[3];
         private readonly byte[][] _objectBytes = new byte[3][];
 
         public Entity[] entities = Array.Empty<Entity>();
+        public Interractable[] interractables = Array.Empty<Interractable>();
 
         // Texture variables.
         public int TextureHeight = 64;
@@ -59,6 +60,7 @@ namespace Raycasting.Domain
             _textures[5] = getBitmap("\\Resources\\purplestone.png");
             _textures[6] = getBitmap("\\Resources\\redbrick.png");
             _textures[7] = getBitmap("\\Resources\\wood.png");
+            _textures[8] = getBitmap("\\Resources\\door_1.bmp");
 
             _objects[0] = getBitmap("\\Resources\\barrel.png");
             _objects[1] = getBitmap("\\Resources\\pillar.png");
@@ -80,25 +82,31 @@ namespace Raycasting.Domain
             //Entities
             entities = new Entity[]
             {
-                new Entity { X = 20.5, Y = 11.5, Texture = 1 },
-                new Entity { X = 18.5, Y = 4.5, Texture = 2 },
-                new Entity { X = 10.0, Y = 4.5, Texture = 2 },
-                new Entity { X = 10.0, Y = 12.5, Texture = 2 },
-                new Entity { X = 3.5, Y = 6.5, Texture = 2 },
-                new Entity { X = 3.5, Y = 20.5, Texture = 2 },
-                new Entity { X = 3.5, Y = 14.5, Texture = 2 },
-                new Entity { X = 14.5, Y = 20.5, Texture = 2 },
-                new Entity { X = 18.5, Y = 10.5, Texture = 1 },
-                new Entity { X = 18.5, Y = 11.5, Texture = 1 },
-                new Entity { X = 18.5, Y = 12.5, Texture = 1 },
-                new Entity { X = 21.5, Y = 1.5, Texture = 0 },
-                new Entity { X = 15.5, Y = 1.5, Texture = 0 },
-                new Entity { X = 16.0, Y = 1.8, Texture = 0 },
-                new Entity { X = 16.2, Y = 1.2, Texture = 0 },
-                new Entity { X = 3.5, Y = 2.5, Texture = 0 },
-                new Entity { X = 9.5, Y = 15.5, Texture = 0 },
-                new Entity { X = 10.0, Y = 15.1, Texture = 0 },
-                new Entity { X = 10.5, Y = 15.8, Texture = 0 }
+                new ImmovableEntity { X = 20.5, Y = 11.5, Texture = 1 },
+                new ImmovableEntity { X = 18.5, Y = 4.5, Texture = 2 },
+                new ImmovableEntity { X = 10.0, Y = 4.5, Texture = 2 },
+                new ImmovableEntity { X = 10.0, Y = 12.5, Texture = 2 },
+                new ImmovableEntity { X = 3.5, Y = 6.5, Texture = 2 },
+                new ImmovableEntity { X = 3.5, Y = 20.5, Texture = 2 },
+                new ImmovableEntity { X = 3.5, Y = 14.5, Texture = 2 },
+                new ImmovableEntity { X = 14.5, Y = 20.5, Texture = 2 },
+                new ImmovableEntity { X = 18.5, Y = 10.5, Texture = 1 },
+                new ImmovableEntity { X = 18.5, Y = 11.5, Texture = 1 },
+                new ImmovableEntity { X = 18.5, Y = 12.5, Texture = 1 },
+                new ImmovableEntity { X = 21.5, Y = 1.5, Texture = 0 },
+                new ImmovableEntity { X = 15.5, Y = 1.5, Texture = 0 },
+                new ImmovableEntity { X = 16.0, Y = 1.8, Texture = 0 },
+                new ImmovableEntity { X = 16.2, Y = 1.2, Texture = 0 },
+                new ImmovableEntity { X = 3.5, Y = 2.5, Texture = 0 },
+                new ImmovableEntity { X = 9.5, Y = 15.5, Texture = 0 },
+                new ImmovableEntity { X = 10.0, Y = 15.1, Texture = 0 },
+                new ImmovableEntity { X = 10.5, Y = 15.8, Texture = 0 }
+            };
+
+            interractables = new Interractable[]
+            {
+                new Door { X = 3, Y = 9, Texture = 8, IsVisible = true },
+                new Door { X = 19, Y = 20, Texture = 8, IsVisible = true }
             };
 
             for (var x = 0; x < _objects.Length; x++)
@@ -148,6 +156,43 @@ namespace Raycasting.Domain
             byte a = _objectBytes[objNum][index + 3];
 
             return (a << 24) | (r << 16) | (g << 8) | b;
+        }
+
+        internal bool HasInterractableOn(double x, double y)
+        {
+            // check if there is an interractable on the current position
+            foreach (var interractable in interractables)
+            {
+                if (interractable.X == (int)x && interractable.Y == (int)y && interractable.IsVisible)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        internal int GetTextureForInterractable(int mapX, int mapY)
+        {
+            foreach (var interractable in interractables)
+            {
+                if (interractable.X == mapX && interractable.Y == mapY && interractable.IsVisible)
+                {
+                    return interractable.Texture;
+                }
+            }
+            return 0;
+        }
+
+        internal void Interract(float newPositionX, float newPositionY)
+        {
+            // interract with the interractable on the current position
+            foreach (var interractable in interractables)
+            {
+                if (interractable.X == (int)newPositionX && interractable.Y == (int)newPositionY)
+                {
+                    interractable.Interract();
+                }
+            }
         }
     }
 }

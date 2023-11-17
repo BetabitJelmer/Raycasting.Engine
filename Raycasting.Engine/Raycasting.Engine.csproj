@@ -12,7 +12,9 @@
     <None Remove="Resources\barrel.png" />
     <None Remove="Resources\bluestone.png" />
     <None Remove="Resources\colorstone.png" />
+    <None Remove="Resources\door_1.bmp" />
     <None Remove="Resources\eagle.png" />
+    <None Remove="Resources\face_1.png" />
     <None Remove="Resources\greenlight.png" />
     <None Remove="Resources\greystone.png" />
     <None Remove="Resources\mossy.png" />
@@ -32,7 +34,13 @@
     <EmbeddedResource Include="Resources\colorstone.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Resources\door_1.bmp">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Resources\eagle.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\face_1.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\greenlight.png">

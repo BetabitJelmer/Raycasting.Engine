@@ -28,38 +28,51 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             pictureBoxMain = new PictureBox();
+            HUD = new PictureBox();
             ((System.ComponentModel.ISupportInitialize)pictureBoxMain).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)HUD).BeginInit();
             SuspendLayout();
             // 
             // pictureBoxMain
             // 
-            pictureBoxMain.Location = new System.Drawing.Point(0, 0);
-            this.pictureBoxMain.Name = "pictureBoxMain";
-            this.pictureBoxMain.Size = new System.Drawing.Size(100, 50);
-            this.pictureBoxMain.TabIndex = 0;
-            this.pictureBoxMain.TabStop = false;
+            pictureBoxMain.Location = new Point(0, 0);
+            pictureBoxMain.Margin = new Padding(4, 3, 4, 3);
+            pictureBoxMain.Name = "pictureBoxMain";
+            pictureBoxMain.Size = new Size(117, 58);
+            pictureBoxMain.TabIndex = 0;
+            pictureBoxMain.TabStop = false;
+            // 
+            // HUD
+            // 
+            HUD.Location = new Point(17, 248);
+            HUD.Name = "HUD";
+            HUD.Size = new Size(100, 50);
+            HUD.TabIndex = 1;
+            HUD.TabStop = false;
             // 
             // MainForm
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(284, 261);
-            this.Controls.Add(this.pictureBoxMain);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.White;
+            ClientSize = new Size(331, 301);
+            Controls.Add(HUD);
+            Controls.Add(pictureBoxMain);
+            Margin = new Padding(4, 3, 4, 3);
             Name = "MainForm";
             Text = "Form1";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainWindow_FormClosing);
-            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainWindow_KeyDown);
-            this.KeyUp += new System.Windows.Forms.KeyEventHandler(this.MainWindow_KeyUp);
+            FormClosing += MainWindow_FormClosing;
+            KeyDown += MainWindow_KeyDown;
+            KeyUp += MainWindow_KeyUp;
             ((System.ComponentModel.ISupportInitialize)pictureBoxMain).EndInit();
+            ((System.ComponentModel.ISupportInitialize)HUD).EndInit();
             ResumeLayout(false);
         }
 
         #endregion
 
         private PictureBox pictureBoxMain;
+        private PictureBox HUD;
     }
 }

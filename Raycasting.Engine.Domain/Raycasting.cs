@@ -25,7 +25,7 @@ namespace Raycasting.Domain
 
         public Raycasting()
         {
-            _player.MoveTo(2, 2);
+            _player.MoveTo(4, 5);
             _player.FaceTo(-1, 0);
         }
 
@@ -77,67 +77,91 @@ namespace Raycasting.Domain
 
             if (left == true)
             {
-                var newPositionX = (_player.Position.X - _camera.Plane.X * _moveSpeed);
-                var newPositionY = (_player.Position.Y - _camera.Plane.Y * _moveSpeed);
+                var newPositionX = (playerx - _camera.Plane.X * _moveSpeed);
+                var newPositionY = (playery - _camera.Plane.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
                 {
-                    // If it doesnt put us in a wall, we can move forwards (or backwards).
-                    playerx = (float)(_player.Position.X - _camera.Plane.X * _moveSpeed);
+                    if(!_map.HasInterractableOn(newPositionX, playery))
+                    {
+                        // If it doesnt put us in a wall, we can move forwards (or backwards).
+                        playerx = (float)(playerx - _camera.Plane.X * _moveSpeed);
+                    }
                 }
-                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
                 {
-                    playery = (float)(_player.Position.Y - _camera.Plane.Y * _moveSpeed);
+                    if (!_map.HasInterractableOn(playerx, newPositionY))
+                    {
+                        playery = (float)(playery - _camera.Plane.Y * _moveSpeed);
+                    }
                 }
             }
             else if (left == false)
             {
-                var newPositionX = (_player.Position.X + _camera.Plane.X * _moveSpeed);
-                var newPositionY = (_player.Position.Y + _camera.Plane.Y * _moveSpeed);
+                var newPositionX = (playerx + _camera.Plane.X * _moveSpeed);
+                var newPositionY = (playery + _camera.Plane.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
                 {
-                    // If it doesnt put us in a wall, we can move forwards (or backwards).
-                    playerx = (float)(_player.Position.X + _camera.Plane.X * _moveSpeed);
+                    if (!_map.HasInterractableOn(newPositionX, playery))
+                    {
+                        // If it doesnt put us in a wall, we can move forwards (or backwards).
+                        playerx = (float)(playerx + _camera.Plane.X * _moveSpeed);
+                    }
                 }
-                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
                 {
-                    playery = (float)(_player.Position.Y + _camera.Plane.Y * _moveSpeed);
+                    if (!_map.HasInterractableOn(playerx, newPositionY))
+                    {
+                        playery = (float)(playery + _camera.Plane.Y * _moveSpeed);
+                    }
                 }
             }
 
             if (forwards == true)
             {
-                var newPositionX = (_player.Position.X + _player.Direction.X * _moveSpeed);
-                var newPositionY = (_player.Position.Y + _player.Direction.Y * _moveSpeed);
+                var newPositionX = (playerx + _player.Direction.X * _moveSpeed);
+                var newPositionY = (playery + _player.Direction.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
                 {
-                    // If it doesnt put us in a wall, we can move forwards (or backwards).
-                    playerx = (float)(_player.Position.X + _player.Direction.X * _moveSpeed);
+                    if (!_map.HasInterractableOn(newPositionX, playery))
+                    {
+                        // If it doesnt put us in a wall, we can move forwards (or backwards).
+                        playerx = (float)(playerx + _player.Direction.X * _moveSpeed);
+                    }
                 }
-                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
                 {
-                    playery = (float)(_player.Position.Y + _player.Direction.Y * _moveSpeed);
+                    if (!_map.HasInterractableOn(playerx, newPositionY))
+                    {
+                        playery = (float)(playery + _player.Direction.Y * _moveSpeed);
+                    }
                 }
             }
             else if(forwards == false)
             {
-                var newPositionX = (_player.Position.X - _player.Direction.X * _moveSpeed);
-                var newPositionY = (_player.Position.Y - _player.Direction.Y * _moveSpeed);
+                var newPositionX = (playerx - _player.Direction.X * _moveSpeed);
+                var newPositionY = (playery - _player.Direction.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0.00 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(_player.Position.Y)] == 0)
+                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
                 {
-                    // If it doesnt put us in a wall, we can move forwards (or backwards).
-                    playerx = (float)(_player.Position.X - _player.Direction.X * _moveSpeed);
+                    if (!_map.HasInterractableOn(newPositionX, playery))
+                    {
+                        // If it doesnt put us in a wall, we can move forwards (or backwards).
+                        playerx = (float)(playerx - _player.Direction.X * _moveSpeed);
+                    }
                 }
-                if ((newPositionY > 0.00 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(_player.Position.X), (int)newPositionY] == 0)
+                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
                 {
-                    playery = (float)(_player.Position.Y - _player.Direction.Y * _moveSpeed);
+                    if (!_map.HasInterractableOn(playerx, newPositionY))
+                    {
+                        playery = (float)(playery - _player.Direction.Y * _moveSpeed);
+                    }
                 }
             }
 
@@ -227,6 +251,7 @@ namespace Raycasting.Domain
                 // Finally, these two track whether a wall was hit, and the side tracks which side, horizontal or vertical was hit.
                 // A horizontal side givess 0 and a vertical side is 1.
                 bool wallHit = false;
+                bool isInterractable = false;
 
                 int side = 0;
 
@@ -278,9 +303,14 @@ namespace Raycasting.Domain
                     {
                         wallHit = true;
                     }
+                    else if(_map.HasInterractableOn(mapX, mapY))
+                    {
+                        wallHit = true;
+                        isInterractable = true;
+                    }
                 }
 
-                drawWall(mapX, mapY, side, x, rayDir, stride, scan0, height, stepX, stepY, ZBuffer);
+                drawWall(mapX, mapY, side, x, rayDir, stride, scan0, height, stepX, stepY, ZBuffer, isInterractable);
             });
             drawEntities(width, height, stride, scan0, ZBuffer);
 
@@ -301,7 +331,7 @@ namespace Raycasting.Domain
         // scan0: the scan0 of the bitmap
         // height: the height of the screen
         // stepX, stepY: the direction of the ray
-        private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY, double[] ZBuffer)
+        private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY, double[] ZBuffer, bool isInterractable)
         {
             // This var is for the overall length of the ray calculations
             double perpWallDist;
@@ -334,7 +364,15 @@ namespace Raycasting.Domain
 
             // Now we pick the colour to draw the line in, this is based upon the colour of the wall
             // and is then made darker if the wall is x aligned or y aligned.
-            int texNum = _map.currentMap[mapX, mapY] - 1;
+            int texNum;
+            if (isInterractable)
+            {
+                texNum = _map.GetTextureForInterractable(mapX, mapY);
+            }
+            else
+            {
+                texNum = _map.currentMap[mapX, mapY] - 1;
+            }
 
             double wallX;
 
@@ -432,7 +470,7 @@ namespace Raycasting.Domain
                 }
 
                 //loop through every vertical stripe of the sprite on screen
-                for (int stripe = drawStartX; stripe < drawEndX; stripe++)
+                Parallel.For(drawStartX, drawEndX, stripe =>
                 {
                     int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * _map.TextureWidth / spriteWidth) / 256;
                     //the conditions in the if are:
@@ -466,7 +504,7 @@ namespace Raycasting.Domain
                             }
                         }
                     }
-                }
+                });
             }
         }
 
@@ -483,6 +521,121 @@ namespace Raycasting.Domain
                 dist[i] = sprites[amount - i - 1].Item1;
                 order[i] = sprites[amount - i - 1].Item2;
             }
+        }
+
+        public void Intteract()
+        {
+            // Check the middle of the screen and go 1 square in front of the player and check if there is an interractable there
+            var playerx = _player.Position.X;
+            var playery = _player.Position.Y;
+
+            var newPositionX = (playerx + _player.Direction.X);
+            var newPositionY = (playery + _player.Direction.Y);
+
+            _map.Interract(newPositionX, newPositionY);
+        }
+
+        public unsafe Image NewHUD(int w_WIDTH, int h_HEIGHT)
+        {
+            // make the whole screen black first
+            var frame = new Bitmap(w_WIDTH, h_HEIGHT, PixelFormat.Format32bppArgb);
+            var data = frame.LockBits(new Rectangle(0, 0, w_WIDTH, h_HEIGHT), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            var span = new Span<int>(data.Scan0.ToPointer(), w_WIDTH * h_HEIGHT);
+            span.Fill(unchecked((int)0xFF000000));
+
+            //draw the face
+            DrawFace(span, w_WIDTH, h_HEIGHT);
+
+            // TODO draw the weapon
+
+            // TODO draw the health bar on the span in red
+
+            // TODO draw the ammo bar
+
+            // TODO draw the minimap
+
+            // TODO draw the compass
+
+            frame.UnlockBits(data);
+            // Draw some information in text on the screen
+            AddTextToFrame(10, 10, 15, "Location: ", Color.White, frame);
+            AddTextToFrame(10, 40, 15, "X: ", Color.White, frame);
+            AddTextToFrame(40, 40, 15, ((int)_player.Position.X).ToString(), Color.White, frame);
+            AddTextToFrame(10, 70, 15, "Y: ", Color.White, frame);
+            AddTextToFrame(40, 70, 15, ((int)_player.Position.Y).ToString(), Color.White, frame);
+
+            AddTextToFrame(10, 100, 15, "Direction: ", Color.White, frame);
+            AddTextToFrame(10, 130, 15, _player.GetDirection(), Color.White, frame);
+
+            DrawLine(150, h_HEIGHT, span, w_WIDTH);
+
+            AddTextToFrame(170, 10, 15, "Controls: ", Color.White, frame);
+            AddTextToFrame(170, 40, 15, "Move: ", Color.White, frame);
+            AddTextToFrame(230, 40, 15, "W A S D", Color.White, frame);
+            AddTextToFrame(170, 70, 15, "Turn:", Color.White, frame);
+            AddTextToFrame(230, 70, 15, "Q E", Color.White, frame);
+            AddTextToFrame(170, 100, 15, "Interract:", Color.White, frame);
+            AddTextToFrame(285, 100, 15, "F", Color.White, frame);
+            AddTextToFrame(170, 130, 15, "Quit:", Color.White, frame);
+            AddTextToFrame(230, 130, 15, "ESC", Color.White, frame);
+
+            DrawLine(150, h_HEIGHT, span, w_WIDTH);
+
+            return frame;
+        }
+
+        private unsafe void DrawLine(int x, int height, Span<int> span, int width)
+        {
+            // draw a line on the x axis with the given height on the span in white
+            for (int y = 0; y < height; y++)
+            {
+                span[y * width + x] = unchecked((int)0xFFFFFFFF);
+            }
+        }
+
+        private unsafe void DrawFace(Span<int> span, int w_WIDTH, int h_HEIGHT)
+        {
+            Bitmap face = new(Image.FromFile(filename: $"{Directory.GetCurrentDirectory()}" + "\\Resources\\face_1.png"));
+            face = (Bitmap)ScaleImage(face, h_HEIGHT);
+
+            // put the face bitmap inside the span
+            var faceScan = face.LockBits(new Rectangle(0, 0, face.Width, face.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            var faceSpan = new Span<int>(faceScan.Scan0.ToPointer(), face.Width * face.Height);
+
+            // Align the image to the right
+            int startX = w_WIDTH - Math.Min(face.Width, w_WIDTH); // Adjust the starting X coordinate
+
+            int startY = (h_HEIGHT - face.Height) / 2;
+            int startIndex = startY * w_WIDTH + startX;
+
+            int faceWidth = Math.Min(face.Width, w_WIDTH - startX);
+            int faceHeight = Math.Min(face.Height, h_HEIGHT - startY);
+
+            // Copy the faceSpan pixel by pixel to the corresponding region in the span
+            for (int y = 0; y < faceHeight; y++)
+            {
+                for (int x = 0; x < faceWidth; x++)
+                {
+                    int destIndex = startIndex + y * w_WIDTH + x;
+                    int sourceIndex = y * face.Width + x;
+                    span[destIndex] = faceSpan[sourceIndex];
+                }
+            }
+            face.UnlockBits(faceScan);
+        }
+
+        private static Image ScaleImage(Image image, int height)
+        {
+            double ratio = (double)height / image.Height;
+            int newWidth = (int)(image.Width * ratio);
+            int newHeight = (int)(image.Height * ratio);
+            Bitmap newImage = new Bitmap(newWidth, newHeight);
+            using (Graphics g = Graphics.FromImage(newImage))
+            {
+                g.DrawImage(image, 0, 0, newWidth, newHeight);
+            }
+            image.Dispose();
+            return newImage;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Raycasting.Domain
 {
-    public class ImmovableEntity : Entity
+    public interface Entity
     {
         public double X { get; set; }
         public double Y { get; set; }
