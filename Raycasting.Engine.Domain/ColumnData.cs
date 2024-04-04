@@ -1,8 +1,4 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
-using System.Numerics;
-
-namespace Raycasting.Domain
+﻿namespace Raycasting.Engine.Domain
 {
     public class ColumnData
     {

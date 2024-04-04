@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 
-namespace Raycasting.Domain
+namespace Raycasting.Engine.Domain
 {
     public class Player
     {
@@ -29,37 +29,33 @@ namespace Raycasting.Domain
             }
 
             // Determine the direction based on the angle
-            if (angle >= 337.5 || angle < 22.5)
+            if (angle is >= 337.5 or < 22.5)
             {
                 return "EAST";
             }
-            else if (angle >= 22.5 && angle < 67.5)
+            else if (angle is >= 22.5 and < 67.5)
             {
                 return "NORTH-EAST";
             }
-            else if (angle >= 67.5 && angle < 112.5)
+            else if (angle is >= 67.5 and < 112.5)
             {
                 return "NORTH";
             }
-            else if (angle >= 112.5 && angle < 157.5)
+            else if (angle is >= 112.5 and < 157.5)
             {
                 return "NORTH-WEST";
             }
-            else if (angle >= 157.5 && angle < 202.5)
+            else if (angle is >= 157.5 and < 202.5)
             {
                 return "WEST";
             }
-            else if (angle >= 202.5 && angle < 247.5)
+            else if (angle is >= 202.5 and < 247.5)
             {
                 return "SOUTH-WEST";
             }
-            else if (angle >= 247.5 && angle < 292.5)
+            else
             {
-                return "SOUTH";
-            }
-            else // angle >= 292.5 && angle < 337.5
-            {
-                return "SOUTH-EAST";
+                return angle is >= 247.5 and < 292.5 ? "SOUTH" : "SOUTH-EAST";
             }
         }
     }

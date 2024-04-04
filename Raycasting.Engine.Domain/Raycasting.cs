@@ -1,10 +1,8 @@
-﻿using System;
-using System.Diagnostics;
+﻿using Raycasting.Domain;
 using System.Drawing.Imaging;
 using System.Numerics;
-using System.Security.Cryptography.Xml;
 
-namespace Raycasting.Domain
+namespace Raycasting.Engine.Domain
 {
     public class Raycasting
     {
@@ -36,29 +34,29 @@ namespace Raycasting.Domain
                 // We use a rotation matrix to rotate the plane and direction vectors.
                 // First we keep track of the old direction, so that the transformation on X first
                 // doesn't affect the Y transformation.
-                Vector2 oldDirection = new Vector2(_player.Direction.X, _player.Direction.Y);
-                var playerx = (float)(_player.Direction.X * Math.Cos(_rotSpeed) - _player.Direction.Y * Math.Sin(_rotSpeed));
-                var playery = (float)(oldDirection.X * Math.Sin(_rotSpeed) + _player.Direction.Y * Math.Cos(_rotSpeed));
+                Vector2 oldDirection = new(_player.Direction.X, _player.Direction.Y);
+                float playerx = (float)((_player.Direction.X * Math.Cos(_rotSpeed)) - (_player.Direction.Y * Math.Sin(_rotSpeed)));
+                float playery = (float)((oldDirection.X * Math.Sin(_rotSpeed)) + (_player.Direction.Y * Math.Cos(_rotSpeed)));
 
                 _player.FaceTo(playerx, playery);
 
-                Vector2 oldPlane = new Vector2(_camera.Plane.X, _camera.Plane.Y);
-                var camerax = (float)(_camera.Plane.X * Math.Cos(_rotSpeed) - _camera.Plane.Y * Math.Sin(_rotSpeed));
-                var camery = (float)(oldPlane.X * Math.Sin(_rotSpeed) + _camera.Plane.Y * Math.Cos(_rotSpeed));
+                Vector2 oldPlane = new(_camera.Plane.X, _camera.Plane.Y);
+                float camerax = (float)((_camera.Plane.X * Math.Cos(_rotSpeed)) - (_camera.Plane.Y * Math.Sin(_rotSpeed)));
+                float camery = (float)((oldPlane.X * Math.Sin(_rotSpeed)) + (_camera.Plane.Y * Math.Cos(_rotSpeed)));
 
                 _camera.MovePlane(camerax, camery);
             }
             else
             {
-                Vector2 oldDirection = new Vector2(_player.Direction.X, _player.Direction.Y);
-                var playerx = (float)(_player.Direction.X * Math.Cos(-_rotSpeed) - _player.Direction.Y * Math.Sin(-_rotSpeed));
-                var playery = (float)(oldDirection.X * Math.Sin(-_rotSpeed) + _player.Direction.Y * Math.Cos(-_rotSpeed));
+                Vector2 oldDirection = new(_player.Direction.X, _player.Direction.Y);
+                float playerx = (float)((_player.Direction.X * Math.Cos(-_rotSpeed)) - (_player.Direction.Y * Math.Sin(-_rotSpeed)));
+                float playery = (float)((oldDirection.X * Math.Sin(-_rotSpeed)) + (_player.Direction.Y * Math.Cos(-_rotSpeed)));
 
                 _player.FaceTo(playerx, playery);
 
-                Vector2 oldPlane = new Vector2(_camera.Plane.X, _camera.Plane.Y);
-                var camerax = (float)(_camera.Plane.X * Math.Cos(-_rotSpeed) - _camera.Plane.Y * Math.Sin(-_rotSpeed));
-                var camery = (float)(oldPlane.X * Math.Sin(-_rotSpeed) + _camera.Plane.Y * Math.Cos(-_rotSpeed));
+                Vector2 oldPlane = new(_camera.Plane.X, _camera.Plane.Y);
+                float camerax = (float)((_camera.Plane.X * Math.Cos(-_rotSpeed)) - (_camera.Plane.Y * Math.Sin(-_rotSpeed)));
+                float camery = (float)((oldPlane.X * Math.Sin(-_rotSpeed)) + (_camera.Plane.Y * Math.Cos(-_rotSpeed)));
 
                 _camera.MovePlane(camerax, camery);
             }
@@ -72,95 +70,95 @@ namespace Raycasting.Domain
                 return;
             }
 
-            var playerx = _player.Position.X;
-            var playery = _player.Position.Y;
+            float playerx = _player.Position.X;
+            float playery = _player.Position.Y;
 
             if (left == true)
             {
-                var newPositionX = (playerx - _camera.Plane.X * _moveSpeed);
-                var newPositionY = (playery - _camera.Plane.Y * _moveSpeed);
+                double newPositionX = playerx - (_camera.Plane.X * _moveSpeed);
+                double newPositionY = playery - (_camera.Plane.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
+                if (newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1) && _map.currentMap[(int)newPositionX, (int)playery] == 0)
                 {
-                    if(!_map.HasInterractableOn(newPositionX, playery))
+                    if (!_map.HasInterractableOn(newPositionX, playery))
                     {
                         // If it doesnt put us in a wall, we can move forwards (or backwards).
-                        playerx = (float)(playerx - _camera.Plane.X * _moveSpeed);
+                        playerx = (float)(playerx - (_camera.Plane.X * _moveSpeed));
                     }
                 }
-                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
+                if (newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0) && _map.currentMap[(int)playerx, (int)newPositionY] == 0)
                 {
                     if (!_map.HasInterractableOn(playerx, newPositionY))
                     {
-                        playery = (float)(playery - _camera.Plane.Y * _moveSpeed);
+                        playery = (float)(playery - (_camera.Plane.Y * _moveSpeed));
                     }
                 }
             }
             else if (left == false)
             {
-                var newPositionX = (playerx + _camera.Plane.X * _moveSpeed);
-                var newPositionY = (playery + _camera.Plane.Y * _moveSpeed);
+                double newPositionX = playerx + (_camera.Plane.X * _moveSpeed);
+                double newPositionY = playery + (_camera.Plane.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
+                if (newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1) && _map.currentMap[(int)newPositionX, (int)playery] == 0)
                 {
                     if (!_map.HasInterractableOn(newPositionX, playery))
                     {
                         // If it doesnt put us in a wall, we can move forwards (or backwards).
-                        playerx = (float)(playerx + _camera.Plane.X * _moveSpeed);
+                        playerx = (float)(playerx + (_camera.Plane.X * _moveSpeed));
                     }
                 }
-                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
+                if (newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0) && _map.currentMap[(int)playerx, (int)newPositionY] == 0)
                 {
                     if (!_map.HasInterractableOn(playerx, newPositionY))
                     {
-                        playery = (float)(playery + _camera.Plane.Y * _moveSpeed);
+                        playery = (float)(playery + (_camera.Plane.Y * _moveSpeed));
                     }
                 }
             }
 
             if (forwards == true)
             {
-                var newPositionX = (playerx + _player.Direction.X * _moveSpeed);
-                var newPositionY = (playery + _player.Direction.Y * _moveSpeed);
+                double newPositionX = playerx + (_player.Direction.X * _moveSpeed);
+                double newPositionY = playery + (_player.Direction.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
+                if (newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1) && _map.currentMap[(int)newPositionX, (int)playery] == 0)
                 {
                     if (!_map.HasInterractableOn(newPositionX, playery))
                     {
                         // If it doesnt put us in a wall, we can move forwards (or backwards).
-                        playerx = (float)(playerx + _player.Direction.X * _moveSpeed);
+                        playerx = (float)(playerx + (_player.Direction.X * _moveSpeed));
                     }
                 }
-                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
+                if (newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0) && _map.currentMap[(int)playerx, (int)newPositionY] == 0)
                 {
                     if (!_map.HasInterractableOn(playerx, newPositionY))
                     {
-                        playery = (float)(playery + _player.Direction.Y * _moveSpeed);
+                        playery = (float)(playery + (_player.Direction.Y * _moveSpeed));
                     }
                 }
             }
-            else if(forwards == false)
+            else if (forwards == false)
             {
-                var newPositionX = (playerx - _player.Direction.X * _moveSpeed);
-                var newPositionY = (playery - _player.Direction.Y * _moveSpeed);
+                double newPositionX = playerx - (_player.Direction.X * _moveSpeed);
+                double newPositionY = playery - (_player.Direction.Y * _moveSpeed);
 
                 // First we check that moving wont put us in a wall
-                if ((newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1)) && _map.currentMap[(int)newPositionX, (int)(playery)] == 0)
+                if (newPositionX > 0 && newPositionX < _map.currentMap.GetLength(1) && _map.currentMap[(int)newPositionX, (int)playery] == 0)
                 {
                     if (!_map.HasInterractableOn(newPositionX, playery))
                     {
                         // If it doesnt put us in a wall, we can move forwards (or backwards).
-                        playerx = (float)(playerx - _player.Direction.X * _moveSpeed);
+                        playerx = (float)(playerx - (_player.Direction.X * _moveSpeed));
                     }
                 }
-                if ((newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0)) && _map.currentMap[(int)(playerx), (int)newPositionY] == 0)
+                if (newPositionY > 0 && newPositionY < _map.currentMap.GetLength(0) && _map.currentMap[(int)playerx, (int)newPositionY] == 0)
                 {
                     if (!_map.HasInterractableOn(playerx, newPositionY))
                     {
-                        playery = (float)(playery - _player.Direction.Y * _moveSpeed);
+                        playery = (float)(playery - (_player.Direction.Y * _moveSpeed));
                     }
                 }
             }
@@ -182,7 +180,7 @@ namespace Raycasting.Domain
 
             // The frameTime is the time between 2 frames, it is used to keep speed constant regardless of the 
             // framerate that the application is running at.
-            frameTime = frameTime / 1000;
+            frameTime /= 1000;
             // Each frame we update the speed based on how long the frames are taking.
             _moveSpeed = frameTime * 5.0;
             _rotSpeed = frameTime * 3.0;
@@ -208,28 +206,28 @@ namespace Raycasting.Domain
         public unsafe Image NewFrame(int width, int height)
         {
             double[] ZBuffer = new double[width];
-            var frame = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-            var data = frame.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            var span = new Span<int>(data.Scan0.ToPointer(), width * height);
+            Bitmap frame = new(width, height, PixelFormat.Format32bppArgb);
+            BitmapData data = frame.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Span<int> span = new(data.Scan0.ToPointer(), width * height);
 
-            var halfSpan = span.Slice(0, span.Length / 2);
+            Span<int> halfSpan = span[..(span.Length / 2)];
             halfSpan.Fill(unchecked((int)0xFF242121));
 
-            var secondHalfSpan = span.Slice(span.Length / 2);
+            Span<int> secondHalfSpan = span[(span.Length / 2)..];
             secondHalfSpan.Fill(unchecked((int)0xFF5C5858));
 
-            var stride = data.Stride;
-            var scan0 = data.Scan0;
+            int stride = data.Stride;
+            nint scan0 = data.Scan0;
 
-            Parallel.For(0, width, x =>
+            _ = Parallel.For(0, width, x =>
             {
                 // This var tracks the relative position of the ray on the camera plane, from -1 to 1, with 0 being screen centre
                 // so that we can use it to muliply the half-length of the camera plane to get the right direction of the ray.
-                double cameraX = 2 * (x / Convert.ToDouble(width)) - 1;
+                double cameraX = (2 * (x / Convert.ToDouble(width))) - 1;
                 // This vector holds the direction the current ray is pointing.
-                Vector2 rayDir = new Vector2(
-                    (float)(_player.Direction.X + _camera.Plane.X * cameraX),
-                    (float)(_player.Direction.Y + _camera.Plane.Y * cameraX));
+                Vector2 rayDir = new(
+                    (float)(_player.Direction.X + (_camera.Plane.X * cameraX)),
+                    (float)(_player.Direction.Y + (_camera.Plane.Y * cameraX)));
 
                 // This holds the absolute SQUARE of the map the ray is in, regardless of position
                 // within that square.
@@ -303,7 +301,7 @@ namespace Raycasting.Domain
                     {
                         wallHit = true;
                     }
-                    else if(_map.HasInterractableOn(mapX, mapY))
+                    else if (_map.HasInterractableOn(mapX, mapY))
                     {
                         wallHit = true;
                         isInterractable = true;
@@ -334,29 +332,23 @@ namespace Raycasting.Domain
         private unsafe void drawWall(int mapX, int mapY, int side, int x, Vector2 rayDir, int stride, nint scan0, int height, int stepX, int stepY, double[] ZBuffer, bool isInterractable)
         {
             // This var is for the overall length of the ray calculations
-            double perpWallDist;
+            double perpWallDist = side == 0
+                ? (double)((mapX - _player.Position.X + ((1 - stepX) / 2)) / rayDir.X)
+                : (double)((mapY - _player.Position.Y + ((1 - stepY) / 2)) / rayDir.Y);
             // Now we've found where the next wall is, we have to find the actual distance.
-            if (side == 0)
-            {
-                perpWallDist = ((mapX - _player.Position.X + ((1 - stepX) / 2)) / rayDir.X);
-            }
-            else
-            {
-                perpWallDist = ((mapY - _player.Position.Y + ((1 - stepY)) / 2)) / rayDir.Y;
-            }
 
             // Here we'll start drawing the column of pixels, now we know what, and how far away.
             // First we find the height of the wall, e.g how much of the screen it should take up
             int columnHeight = (int)(height / perpWallDist);
             // Next we need to find where to start drawing the column and where to stop, since the walls
             // will be in the centre of the screen, finding the start and end is quite simple.
-            int drawStart = ((height / 2) + (columnHeight / 2));
+            int drawStart = (height / 2) + (columnHeight / 2);
             // If we are going to be drawing off-screen, then draw just on screen.
             if (drawStart >= height)
             {
                 drawStart = height - 1;
             }
-            int drawEnd = ((height / 2) - (columnHeight / 2));
+            int drawEnd = (height / 2) - (columnHeight / 2);
             if (drawEnd < 0)
             {
                 drawEnd = 0;
@@ -364,37 +356,18 @@ namespace Raycasting.Domain
 
             // Now we pick the colour to draw the line in, this is based upon the colour of the wall
             // and is then made darker if the wall is x aligned or y aligned.
-            int texNum;
-            if (isInterractable)
-            {
-                texNum = _map.GetTextureForInterractable(mapX, mapY);
-            }
-            else
-            {
-                texNum = _map.currentMap[mapX, mapY] - 1;
-            }
+            int texNum = isInterractable ? _map.GetTextureForInterractable(mapX, mapY) : _map.currentMap[mapX, mapY] - 1;
 
-            double wallX;
-
-            if (side == 0)
-            {
-                wallX = _player.Position.Y + perpWallDist * rayDir.Y;
-
-            }
-            else
-            {
-                wallX = _player.Position.X + perpWallDist * rayDir.X;
-            }
-
+            double wallX = side == 0 ? _player.Position.Y + (perpWallDist * rayDir.Y) : _player.Position.X + (perpWallDist * rayDir.X);
             wallX -= Math.Floor(wallX);
 
             int texX = (int)(wallX * _map.TextureWidth);
 
-            var column = (int*)(scan0 + (x * 4));
+            int* column = (int*)(scan0 + (x * 4));
 
             for (int y = drawEnd; y < drawStart; y++)
             {
-                int d = y * 256 - height * 128 + columnHeight * 128;
+                int d = (y * 256) - (height * 128) + (columnHeight * 128);
 
                 int texY = d * _map.TextureHeight / columnHeight / 256;
 
@@ -418,14 +391,14 @@ namespace Raycasting.Domain
         // ZBuffer: the ZBuffer of the screen
         private unsafe void drawEntities(int width, int height, int stride, nint scan0, double[] ZBuffer)
         {
-            var length = _map.entities.Length;
-            var spriteOrder = new int[length];
-            var spriteDistance = new double[length];
+            int length = _map.entities.Length;
+            int[] spriteOrder = new int[length];
+            double[] spriteDistance = new double[length];
 
             for (int i = 0; i < length; i++)
             {
                 spriteOrder[i] = i;
-                spriteDistance[i] = ((_player.Position.X - _map.entities[i].X) * (_player.Position.X - _map.entities[i].X) + (_player.Position.Y - _map.entities[i].Y) * (_player.Position.Y - _map.entities[i].Y)); //sqrt not taken, unneeded
+                spriteDistance[i] = ((_player.Position.X - _map.entities[i].X) * (_player.Position.X - _map.entities[i].X)) + ((_player.Position.Y - _map.entities[i].Y) * (_player.Position.Y - _map.entities[i].Y)); //sqrt not taken, unneeded
             }
 
             sortSprites(spriteOrder, spriteDistance, length);
@@ -437,58 +410,58 @@ namespace Raycasting.Domain
                 double spriteX = _map.entities[spriteOrder[i]].X - _player.Position.X;
                 double spriteY = _map.entities[spriteOrder[i]].Y - _player.Position.Y;
 
-                double invDet = 1.0 / (_camera.Plane.X * _player.Direction.Y - _player.Direction.X * _camera.Plane.Y);
-                double transformX = invDet * (_player.Direction.Y * spriteX - _player.Direction.X * spriteY);
-                double transformY = invDet * (-_camera.Plane.Y * spriteX + _camera.Plane.X * spriteY); //this is actually the depth inside the screen, that what Z is in 3D
+                double invDet = 1.0 / ((_camera.Plane.X * _player.Direction.Y) - (_player.Direction.X * _camera.Plane.Y));
+                double transformX = invDet * ((_player.Direction.Y * spriteX) - (_player.Direction.X * spriteY));
+                double transformY = invDet * ((-_camera.Plane.Y * spriteX) + (_camera.Plane.X * spriteY)); //this is actually the depth inside the screen, that what Z is in 3D
 
-                int spriteScreenX = (int)((width / 2) * (1 + transformX / transformY));
+                int spriteScreenX = (int)(width / 2 * (1 + (transformX / transformY)));
                 //calculate height of the sprite on screen
-                int spriteHeight = Math.Abs((int)(height / (transformY))); //using 'transformY' instead of the real distance prevents fisheye
-                                                               //calculate lowest and highest pixel to fill in current stripe
-                int drawStartY = -spriteHeight / 2 + height / 2;
+                int spriteHeight = Math.Abs((int)(height / transformY)); //using 'transformY' instead of the real distance prevents fisheye
+                                                                         //calculate lowest and highest pixel to fill in current stripe
+                int drawStartY = (-spriteHeight / 2) + (height / 2);
                 if (drawStartY < 0)
                 {
                     drawStartY = 0;
                 }
-                int drawEndY = spriteHeight / 2 + height / 2;
+                int drawEndY = (spriteHeight / 2) + (height / 2);
                 if (drawEndY >= height)
                 {
                     drawEndY = height - 1;
                 }
 
                 //calculate width of the sprite
-                int spriteWidth = Math.Abs((int)(height / (transformY)));
-                int drawStartX = -spriteWidth / 2 + spriteScreenX;
+                int spriteWidth = Math.Abs((int)(height / transformY));
+                int drawStartX = (-spriteWidth / 2) + spriteScreenX;
                 if (drawStartX < 0)
-                { 
-                    drawStartX = 0; 
+                {
+                    drawStartX = 0;
                 }
-                int drawEndX = spriteWidth / 2 + spriteScreenX;
+                int drawEndX = (spriteWidth / 2) + spriteScreenX;
                 if (drawEndX >= width)
                 {
                     drawEndX = width - 1;
                 }
 
                 //loop through every vertical stripe of the sprite on screen
-                Parallel.For(drawStartX, drawEndX, stripe =>
+                _ = Parallel.For(drawStartX, drawEndX, stripe =>
                 {
-                    int texX = (int)(256 * (stripe - (-spriteWidth / 2 + spriteScreenX)) * _map.TextureWidth / spriteWidth) / 256;
+                    int texX = 256 * (stripe - ((-spriteWidth / 2) + spriteScreenX)) * _map.TextureWidth / spriteWidth / 256;
                     //the conditions in the if are:
                     //1) it's in front of camera plane so you don't see things behind you
                     //2) it's on the screen (left)
                     //3) it's on the screen (right)
                     //4) ZBuffer, with perpendicular distance
 
-                    var column = (int*)(scan0 + (stripe * 4));
-                    var floatHeight = height * 128;
-                    var floatSpriteHeight = spriteHeight * 128;
+                    int* column = (int*)(scan0 + (stripe * 4));
+                    int floatHeight = height * 128;
+                    int floatSpriteHeight = spriteHeight * 128;
 
                     if (transformY > 0 && stripe > 0 && stripe < width && transformY < ZBuffer[stripe])
                     {
                         for (int y = drawStartY; y < drawEndY; y++) //for every pixel of the current stripe
                         {
-                            int d = (y) * 256 - floatHeight + floatSpriteHeight; //256 and 128 factors to avoid floats
-                            int texY = ((d * _map.TextureHeight) / spriteHeight) / 256;
+                            int d = (y * 256) - floatHeight + floatSpriteHeight; //256 and 128 factors to avoid floats
+                            int texY = d * _map.TextureHeight / spriteHeight / 256;
                             if (texY < 0)
                             {
                                 texY = 0;
@@ -497,7 +470,7 @@ namespace Raycasting.Domain
                             {
                                 texX = 0;
                             }
-                            var pixel = _map.GetColorForObject(texX, texY, _map.entities[spriteOrder[i]].Texture);
+                            int pixel = _map.GetColorForObject(texX, texY, _map.entities[spriteOrder[i]].Texture);
                             if ((pixel & 0x00FFFFFF) != 0)
                             {
                                 column[y * stride / 4] = pixel;
@@ -510,7 +483,7 @@ namespace Raycasting.Domain
 
         private void sortSprites(int[] order, double[] dist, int amount)
         {
-            var sprites = new List<(double, int)>(amount);
+            List<(double, int)> sprites = new(amount);
             for (int i = 0; i < amount; i++)
             {
                 sprites.Add((dist[i], order[i]));
@@ -526,11 +499,11 @@ namespace Raycasting.Domain
         public void Intteract()
         {
             // Check the middle of the screen and go 1 square in front of the player and check if there is an interractable there
-            var playerx = _player.Position.X;
-            var playery = _player.Position.Y;
+            float playerx = _player.Position.X;
+            float playery = _player.Position.Y;
 
-            var newPositionX = (playerx + _player.Direction.X);
-            var newPositionY = (playery + _player.Direction.Y);
+            float newPositionX = playerx + _player.Direction.X;
+            float newPositionY = playery + _player.Direction.Y;
 
             _map.Interract(newPositionX, newPositionY);
         }
@@ -538,9 +511,9 @@ namespace Raycasting.Domain
         public unsafe Image NewHUD(int w_WIDTH, int h_HEIGHT)
         {
             // make the whole screen black first
-            var frame = new Bitmap(w_WIDTH, h_HEIGHT, PixelFormat.Format32bppArgb);
-            var data = frame.LockBits(new Rectangle(0, 0, w_WIDTH, h_HEIGHT), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            var span = new Span<int>(data.Scan0.ToPointer(), w_WIDTH * h_HEIGHT);
+            Bitmap frame = new(w_WIDTH, h_HEIGHT, PixelFormat.Format32bppArgb);
+            BitmapData data = frame.LockBits(new Rectangle(0, 0, w_WIDTH, h_HEIGHT), ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Span<int> span = new(data.Scan0.ToPointer(), w_WIDTH * h_HEIGHT);
             span.Fill(unchecked((int)0xFF000000));
 
             //draw the face
@@ -589,7 +562,7 @@ namespace Raycasting.Domain
             // draw a line on the x axis with the given height on the span in white
             for (int y = 0; y < height; y++)
             {
-                span[y * width + x] = unchecked((int)0xFFFFFFFF);
+                span[(y * width) + x] = unchecked((int)0xFFFFFFFF);
             }
         }
 
@@ -599,14 +572,14 @@ namespace Raycasting.Domain
             face = (Bitmap)ScaleImage(face, h_HEIGHT);
 
             // put the face bitmap inside the span
-            var faceScan = face.LockBits(new Rectangle(0, 0, face.Width, face.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            var faceSpan = new Span<int>(faceScan.Scan0.ToPointer(), face.Width * face.Height);
+            BitmapData faceScan = face.LockBits(new Rectangle(0, 0, face.Width, face.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            Span<int> faceSpan = new(faceScan.Scan0.ToPointer(), face.Width * face.Height);
 
             // Align the image to the right
             int startX = w_WIDTH - Math.Min(face.Width, w_WIDTH); // Adjust the starting X coordinate
 
             int startY = (h_HEIGHT - face.Height) / 2;
-            int startIndex = startY * w_WIDTH + startX;
+            int startIndex = (startY * w_WIDTH) + startX;
 
             int faceWidth = Math.Min(face.Width, w_WIDTH - startX);
             int faceHeight = Math.Min(face.Height, h_HEIGHT - startY);
@@ -616,8 +589,8 @@ namespace Raycasting.Domain
             {
                 for (int x = 0; x < faceWidth; x++)
                 {
-                    int destIndex = startIndex + y * w_WIDTH + x;
-                    int sourceIndex = y * face.Width + x;
+                    int destIndex = startIndex + (y * w_WIDTH) + x;
+                    int sourceIndex = (y * face.Width) + x;
                     span[destIndex] = faceSpan[sourceIndex];
                 }
             }
@@ -629,7 +602,7 @@ namespace Raycasting.Domain
             double ratio = (double)height / image.Height;
             int newWidth = (int)(image.Width * ratio);
             int newHeight = (int)(image.Height * ratio);
-            Bitmap newImage = new Bitmap(newWidth, newHeight);
+            Bitmap newImage = new(newWidth, newHeight);
             using (Graphics g = Graphics.FromImage(newImage))
             {
                 g.DrawImage(image, 0, 0, newWidth, newHeight);

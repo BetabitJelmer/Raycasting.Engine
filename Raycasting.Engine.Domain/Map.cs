@@ -1,10 +1,7 @@
-﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
+﻿using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
-using System.Security.Policy;
 
-namespace Raycasting.Domain
+namespace Raycasting.Engine.Domain
 {
     public class Map
     {
@@ -67,12 +64,12 @@ namespace Raycasting.Domain
             _objects[2] = getBitmap("\\Resources\\greenlight.png");
 
             //Walls
-            for(var x = 0; x < _textures.Length; x++)
+            for (int x = 0; x < _textures.Length; x++)
             {
                 _textureBytes[x] = new byte[TextureWidth * TextureHeight * 4];
 
-                var bitmapData = _textures[x].LockBits(new Rectangle(0, 0, TextureWidth, TextureHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                var length = bitmapData.Stride * bitmapData.Height;
+                BitmapData bitmapData = _textures[x].LockBits(new Rectangle(0, 0, TextureWidth, TextureHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                int length = bitmapData.Stride * bitmapData.Height;
 
                 // Copy bitmap to byte[]
                 Marshal.Copy(bitmapData.Scan0, _textureBytes[x], 0, length);
@@ -109,12 +106,12 @@ namespace Raycasting.Domain
                 new Door { X = 19, Y = 20, Texture = 8, IsVisible = true }
             };
 
-            for (var x = 0; x < _objects.Length; x++)
+            for (int x = 0; x < _objects.Length; x++)
             {
                 _objectBytes[x] = new byte[TextureWidth * TextureHeight * 4];
 
-                var bitmapData = _objects[x].LockBits(new Rectangle(0, 0, TextureWidth, TextureHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-                var length = bitmapData.Stride * bitmapData.Height;
+                BitmapData bitmapData = _objects[x].LockBits(new Rectangle(0, 0, TextureWidth, TextureHeight), ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+                int length = bitmapData.Stride * bitmapData.Height;
 
                 // Copy bitmap to byte[]
                 Marshal.Copy(bitmapData.Scan0, _objectBytes[x], 0, length);
@@ -144,7 +141,7 @@ namespace Raycasting.Domain
                 b = (byte)(b >> 1);
             }
 
-            return (a << 24) | (r << 16) | (g << 8) | b;
+            return a << 24 | r << 16 | g << 8 | b;
         }
 
         internal int GetColorForObject(int objX, int objY, int objNum)
@@ -155,13 +152,13 @@ namespace Raycasting.Domain
             byte r = _objectBytes[objNum][index + 2];
             byte a = _objectBytes[objNum][index + 3];
 
-            return (a << 24) | (r << 16) | (g << 8) | b;
+            return a << 24 | r << 16 | g << 8 | b;
         }
 
         internal bool HasInterractableOn(double x, double y)
         {
             // check if there is an interractable on the current position
-            foreach (var interractable in interractables)
+            foreach (Interractable interractable in interractables)
             {
                 if (interractable.X == (int)x && interractable.Y == (int)y && interractable.IsVisible)
                 {
@@ -173,7 +170,7 @@ namespace Raycasting.Domain
 
         internal int GetTextureForInterractable(int mapX, int mapY)
         {
-            foreach (var interractable in interractables)
+            foreach (Interractable interractable in interractables)
             {
                 if (interractable.X == mapX && interractable.Y == mapY && interractable.IsVisible)
                 {
@@ -186,7 +183,7 @@ namespace Raycasting.Domain
         internal void Interract(float newPositionX, float newPositionY)
         {
             // interract with the interractable on the current position
-            foreach (var interractable in interractables)
+            foreach (Interractable interractable in interractables)
             {
                 if (interractable.X == (int)newPositionX && interractable.Y == (int)newPositionY)
                 {

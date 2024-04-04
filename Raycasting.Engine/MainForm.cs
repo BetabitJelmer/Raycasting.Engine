@@ -1,6 +1,4 @@
 using System.Diagnostics;
-using System.DirectoryServices.ActiveDirectory;
-using System.Windows.Forms;
 
 namespace Raycasting.Engine
 {
@@ -11,12 +9,11 @@ namespace Raycasting.Engine
         private const int W_HEIGHT = 800;
         private const int H_HEIGHT = 200;
 
-        private Thread logicThread; 
+        private readonly Thread logicThread;
 
         // Stopwatch is used to keep track of frame time for consistent movement.
-        private Stopwatch frameTime = new Stopwatch();
-
-        Domain.Raycasting RC = new Domain.Raycasting();
+        private readonly Stopwatch frameTime = new();
+        private readonly Domain.Raycasting RC = new();
 
         private bool forward = false;
         private bool back = false;
@@ -27,7 +24,7 @@ namespace Raycasting.Engine
         private bool interract = false;
 
         // Create a new cancellation token and a token source to use
-        CancellationTokenSource tokenSource = new CancellationTokenSource();
+        private readonly CancellationTokenSource tokenSource = new();
 
         public MainForm()
         {
@@ -47,7 +44,7 @@ namespace Raycasting.Engine
 
         public void DrawHUD(CancellationToken token)
         {
-            var img = RC.NewHUD(W_WIDTH, H_HEIGHT);
+            Image img = RC.NewHUD(W_WIDTH, H_HEIGHT);
 
             UpdatePictureBoxHUDImage((Image)img.Clone());
             img.Dispose();
@@ -63,18 +60,18 @@ namespace Raycasting.Engine
             {
                 HUD.Image?.Dispose();
                 HUD.Image = image;
-            }         
+            }
         }
 
         public void DrawMainScreen(CancellationToken token)
         {
             // FrameTimeDouble is the length of time between frames.
             double frameTimeDouble = 0;
-            Stopwatch interactCooldownTimer = new Stopwatch();
+            Stopwatch interactCooldownTimer = new();
             const int interactCooldownMilliseconds = 200; // Set the cooldown time in milliseconds
             interactCooldownTimer.Start();
 
-            Stopwatch hudCooldownTimer = new Stopwatch();
+            Stopwatch hudCooldownTimer = new();
             const int hudCooldownMilliseconds = 200; // Set the cooldown time in milliseconds
             hudCooldownTimer.Start();
             try
@@ -96,7 +93,7 @@ namespace Raycasting.Engine
                     // Update the player move speeds based on the last frame length.
                     RC.UpdateFramerate(frameTimeDouble);
 
-                    var img = RC.NewFrame(W_WIDTH, W_HEIGHT);
+                    Image img = RC.NewFrame(W_WIDTH, W_HEIGHT);
 
                     UpdatePictureBoxMainImage((Image)img.Clone());
                     img.Dispose();

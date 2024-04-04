@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-
-namespace Raycasting.Domain
+﻿namespace Raycasting.Engine.Domain
 {
     public class ImmovableEntity : Entity
     {
